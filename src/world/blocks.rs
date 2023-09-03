@@ -281,7 +281,7 @@ enum_pack::flattenum! {
         Orange,
         Yellow,
         Green,
-        LimeGreen,
+        Lime,
         Blue,
         LightBlue,
         Cyan,
@@ -331,10 +331,18 @@ enum_pack::flattenum! {
         DeadBush,
     }
 
+    StairShape = {
+        InnerLeft,
+        InnerRight,
+        OuterLeft,
+        OuterRight,
+        Straight,
+    }
+
     Shape = {
-        Stair(Direction4, UpDown, WaterLogged),
+        Stair(Direction4, UpDown, StairShape, WaterLogged),
         Slab(SlabHalf, WaterLogged),
-        Wall(Side, Side, Side, Side, WaterLogged),
+        Wall(Side, Side, Side, Side, Side, WaterLogged),
         Fence(Side, Side, Side, Side, WaterLogged),
     }
 
@@ -342,14 +350,14 @@ enum_pack::flattenum! {
         Block,
     }
 
-    ShapedDirectedBlock = Shape + {
-        Block(Axis),
-    }
-
     WallFace = {
         Ceiling,
         Wall,
         Floor
+    }
+
+    Attachment = WallFace + {
+        DoubleWall
     }
 
     Stripped = {
@@ -569,6 +577,11 @@ enum_pack::flattenum! {
         False,
     }
 
+    Occupied = {
+        True,
+        False,
+    }
+
     Crops = {
         Crop7(Age7Crop, Level7),
         Crop3(Age3Crop, Level3),
@@ -586,8 +599,8 @@ enum_pack::flattenum! {
         Stone(ShapedBlock),
         Cobblestone(ShapedBlock),
         MossyCobblestone(ShapedBlock),
-        Deepslate(ShapedDirectedBlock),
-        InfestedDeepslate(ShapedDirectedBlock),
+        Deepslate(Axis),
+        InfestedDeepslate(Axis),
         StoneBrick(ShapedBlock),
         MossyStoneBrick(ShapedBlock),
         SmoothStone(ShapedBlock),
@@ -627,16 +640,14 @@ enum_pack::flattenum! {
         PolishedAndesite(ShapedBlock),
         PolishedGranite(ShapedBlock),
         PolishedDiorite(ShapedBlock),
-        RedstoneBlock,
-        GoldBlock,
         InfestedStone,
-        DriptoneBlock,
+        DripstoneBlock,
         PointedDripstone(UpDown, DripstoneThickness, WaterLogged),
         Flower(Flower),
         SmoothBasalt,
 
         Log(WoodType, LogType, Stripped, Axis),
-        Sapling(SaplingType),
+        Sapling(SaplingType, Level1),
         Planks(WoodType, ShapedBlock),
         Leaves(LeafType, Level7, Persistent, WaterLogged),
         PressurePlate(PressurePlateType, Powered),
@@ -646,7 +657,7 @@ enum_pack::flattenum! {
         FenceGate(WoodType, Open, Powered, Direction4, InWall),
         Sign(WoodType, Sign, WaterLogged),
 
-        MangrovePropagule(Level4, Hanging, WaterLogged),//ignore age
+        MangrovePropagule(Level3, Hanging, Level1, WaterLogged),//ignore age
         MangroveRoots(WaterLogged),
         MuddyMangroveRoots(Axis),
         HangingRoots(WaterLogged),
@@ -665,7 +676,7 @@ enum_pack::flattenum! {
         FlowerPot,
         Potted(Flower),
         CrackedDeepslateTiles,
-        Bed(DyeColor, Direction4, BedEnd), //occupied exists but omitted
+        Bed(DyeColor, Direction4, BedEnd, Occupied),
         Torch(Soul, Direction5),
         RedstoneTorch(Direction5, Lit),
         Furnace(Direction4, Lit),
@@ -684,7 +695,7 @@ enum_pack::flattenum! {
         Candle(DyeColorClear, Lit, Count4, WaterLogged),
         Terracotta(DyeColorClear),
         GlazedTerracotta(DyeColor, Direction4),
-        Bell(Powered, Direction4, WallFace), //wall face is attachment point with some data omitted
+        Bell(Powered, Direction4, Attachment), //wall face is attachment point with some data omitted
         Wool(DyeColor),
         Carpet(DyeColor),
         Seagrass,
@@ -692,9 +703,9 @@ enum_pack::flattenum! {
         Clay,
         MagmaBlock,
         BubbleColumn(Drag),
-        SugarCane,//ignore age
-        CaveVines(Berries),//ignore age(0-24)
-        CaveVinesPlant(Berries),//ignore age(0-24)
+        SugarCane(Level15),
+        CaveVines(Berries, Level24),
+        CaveVinesPlant(Berries, Level24),
         WeepingVines(Level25),
         WeepingVinesPlant,
         TwistingVines(Level25),
@@ -716,7 +727,7 @@ enum_pack::flattenum! {
         SeaPickle(Count4, WaterLogged),
         MossCarpet,
         NetherSprouts,
-        Kelp,//ignore age
+        Kelp(Level25),
         SlimeBlock,
         HoneyBlock,
         RedstoneWire(RedstoneConnection, RedstoneConnection, RedstoneConnection, RedstoneConnection, Level15),
@@ -847,6 +858,7 @@ enum_pack::flattenum! {
         Tripwire(Powered, Disarmed, Attached, Side, Side, Side, Side),
         KelpPlant,
         DragonEgg,
+        SweetBerryBush(Level3),
     }
 }
 
@@ -1047,7 +1059,7 @@ fn get_0_to_25(nbt: &HashMap<String, NBT>, field: &str) -> Level25 {
         "23" => Level25::TwentyThree,
         "24" => Level25::TwentyFour,
         "25" => Level25::TwentyFive,
-        t => panic!("expected '0' to '24' found {} (Mojang why are these strings?)", t)
+        t => panic!("expected '0' to '25' found {} (Mojang why are these strings?)", t)
     }
 }
 
@@ -1082,8 +1094,8 @@ fn get_honey_level(nbt: &HashMap<String, NBT>) -> Level5 {
     get_0_to_5(nbt, "honey_level")
 }
 
-fn get_stage4(nbt: &HashMap<String, NBT>) -> Level4 {
-    get_0_to_4(nbt, "stage")
+fn get_stage1(nbt: &HashMap<String, NBT>) -> Level1 {
+    get_0_to_1(nbt, "stage")
 }
 
 fn get_note(nbt: &HashMap<String, NBT>) -> Level24 {
@@ -1382,12 +1394,12 @@ fn get_eggs(nbt: &HashMap<String, NBT>) -> Count4 {
 }
 
 
-fn get_attachment(nbt: &HashMap<String, NBT>) -> WallFace {
+fn get_attachment(nbt: &HashMap<String, NBT>) -> Attachment {
     match read_nbt_str(nbt, "attachment") {
-        "ceiling" => WallFace::Ceiling,
-        "floor" => WallFace::Floor,
-        "single_wall" => WallFace::Wall,
-        "double_wall" => WallFace::Wall,
+        "ceiling" => Attachment::Ceiling,
+        "floor" => Attachment::Floor,
+        "single_wall" => Attachment::Wall,
+        "double_wall" => Attachment::DoubleWall,
         t => panic!("expected attachment point found {}", t)
     }
 }
@@ -1590,6 +1602,15 @@ fn get_age15(nbt: &HashMap<String, NBT>) -> Level15 {
     get_0_to_15(nbt, "age")
 }
 
+fn get_age24(nbt: &HashMap<String, NBT>) -> Level24 {
+    get_0_to_24(nbt, "age")
+}
+
+fn get_age25(nbt: &HashMap<String, NBT>) -> Level25 {
+    get_0_to_25(nbt, "age")
+}
+
+
 fn get_charges4(nbt: &HashMap<String, NBT>) -> Level4 {
     get_0_to_4(nbt, "charges")
 }
@@ -1622,8 +1643,19 @@ fn get_down(nbt: &HashMap<String, NBT>) -> Side {
     }
 }
 
+fn get_stair_shape(nbt: &HashMap<String, NBT>) -> StairShape {
+    match read_nbt_str(nbt, "shape") {
+        "inner_left" => StairShape::InnerLeft,
+        "inner_right" => StairShape::InnerRight,
+        "outer_left" => StairShape::OuterLeft,
+        "outer_right" => StairShape::OuterRight,
+        "straight" => StairShape::Straight,
+        t => panic!("expected stair shape found {}", t)
+    }
+}
+
 fn get_stair(nbt: &HashMap<String, NBT>) -> ShapedBlock {
-    ShapedBlock::Stair(get_facing4(nbt), get_stair_up_down(nbt), get_waterlogged(nbt))
+    ShapedBlock::Stair(get_facing4(nbt), get_stair_up_down(nbt), get_stair_shape(nbt), get_waterlogged(nbt))
 }
 
 fn get_slab(nbt: &HashMap<String, NBT>) -> ShapedBlock {
@@ -1644,6 +1676,7 @@ fn get_wall(nbt: &HashMap<String, NBT>) -> ShapedBlock {
         get_wall_side(nbt, Direction6::East),
         get_wall_side(nbt, Direction6::South),
         get_wall_side(nbt, Direction6::West),
+        get_wall_side(nbt, Direction6::Up),
         get_waterlogged(nbt))
 }
 
@@ -1672,6 +1705,13 @@ fn get_disarmed(nbt: &HashMap<String, NBT>) -> Disarmed {
     match read_nbt_string_boolean(nbt, "disarmed") {
         true => Disarmed::True,
         false => Disarmed::False,
+    }
+}
+
+fn get_occupied(nbt: &HashMap<String, NBT>) -> Occupied {
+    match read_nbt_string_boolean(nbt, "shape") {
+        true => Occupied::True,
+        false => Occupied::False,
     }
 }
 
@@ -1725,14 +1765,23 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:polished_granite" => Blocks::PolishedGranite(ShapedBlock::Block),
                 "minecraft:polished_diorite" => Blocks::PolishedDiorite(ShapedBlock::Block),
                 "minecraft:stone" => Blocks::Stone(ShapedBlock::Block),
-                "minecraft:redstone_block" => Blocks::RedstoneBlock,
+                "minecraft:redstone_block" => Blocks::OreBlock(OreType::Redstone(Lit::Unlit)),
                 "minecraft:infested_stone" => Blocks::InfestedStone,
-                "minecraft:dripstone_block" => Blocks::DriptoneBlock,
+                "minecraft:dripstone_block" => Blocks::DripstoneBlock,
                 "minecraft:cracked_deepslate_bricks" => Blocks::CrackedDeepslateBricks,
                 "minecraft:deepslate_bricks" => Blocks::DeepslateBricks(ShapedBlock::Block),
                 "minecraft:cobbled_deepslate" => Blocks::CobbledDeepslate(ShapedBlock::Block),
                 "minecraft:chiseled_deepslate" => Blocks::ChiseledDeepslate,
                 "minecraft:smooth_basalt" => Blocks::SmoothBasalt,
+                "minecraft:soul_fire" => {
+                    Blocks::Fire(Soul::Soul,
+                        Level15::Zero,
+                        Side::True,
+                        Side::True,
+                        Side::True,
+                        Side::True,
+                        Side::True)
+                }
 
                 "minecraft:oak_planks" => Blocks::Planks(WoodType::Oak, ShapedBlock::Block),
                 "minecraft:birch_planks" => Blocks::Planks(WoodType::Birch, ShapedBlock::Block),
@@ -1942,7 +1991,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_stained_glass" => Blocks::Glass(DyeColorClear::Orange),
                 "minecraft:yellow_stained_glass" => Blocks::Glass(DyeColorClear::Yellow),
                 "minecraft:green_stained_glass" => Blocks::Glass(DyeColorClear::Green),
-                "minecraft:lime_stained_glass" => Blocks::Glass(DyeColorClear::LimeGreen),
+                "minecraft:lime_stained_glass" => Blocks::Glass(DyeColorClear::Lime),
                 "minecraft:blue_stained_glass" => Blocks::Glass(DyeColorClear::Blue),
                 "minecraft:light_blue_stained_glass" => Blocks::Glass(DyeColorClear::LightBlue),
                 "minecraft:cyan_stained_glass" => Blocks::Glass(DyeColorClear::Cyan),
@@ -1961,7 +2010,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_terracotta" => Blocks::Terracotta(DyeColorClear::Orange),
                 "minecraft:yellow_terracotta" => Blocks::Terracotta(DyeColorClear::Yellow),
                 "minecraft:green_terracotta" => Blocks::Terracotta(DyeColorClear::Green),
-                "minecraft:lime_terracotta" => Blocks::Terracotta(DyeColorClear::LimeGreen),
+                "minecraft:lime_terracotta" => Blocks::Terracotta(DyeColorClear::Lime),
                 "minecraft:blue_terracotta" => Blocks::Terracotta(DyeColorClear::Blue),
                 "minecraft:light_blue_terracotta" => Blocks::Terracotta(DyeColorClear::LightBlue),
                 "minecraft:cyan_terracotta" => Blocks::Terracotta(DyeColorClear::Cyan),
@@ -1978,7 +2027,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_wool" => Blocks::Wool(DyeColor::Orange),
                 "minecraft:yellow_wool" => Blocks::Wool(DyeColor::Yellow),
                 "minecraft:green_wool" => Blocks::Wool(DyeColor::Green),
-                "minecraft:lime_wool" => Blocks::Wool(DyeColor::LimeGreen),
+                "minecraft:lime_wool" => Blocks::Wool(DyeColor::Lime),
                 "minecraft:blue_wool" => Blocks::Wool(DyeColor::Blue),
                 "minecraft:light_blue_wool" => Blocks::Wool(DyeColor::LightBlue),
                 "minecraft:cyan_wool" => Blocks::Wool(DyeColor::Cyan),
@@ -1995,7 +2044,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_carpet" => Blocks::Carpet(DyeColor::Orange),
                 "minecraft:yellow_carpet" => Blocks::Carpet(DyeColor::Yellow),
                 "minecraft:green_carpet" => Blocks::Carpet(DyeColor::Green),
-                "minecraft:lime_carpet" => Blocks::Carpet(DyeColor::LimeGreen),
+                "minecraft:lime_carpet" => Blocks::Carpet(DyeColor::Lime),
                 "minecraft:blue_carpet" => Blocks::Carpet(DyeColor::Blue),
                 "minecraft:light_blue_carpet" => Blocks::Carpet(DyeColor::LightBlue),
                 "minecraft:cyan_carpet" => Blocks::Carpet(DyeColor::Cyan),
@@ -2012,7 +2061,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_concrete" => Blocks::Concrete(DyeColor::Orange),
                 "minecraft:yellow_concrete" => Blocks::Concrete(DyeColor::Yellow),
                 "minecraft:green_concrete" => Blocks::Concrete(DyeColor::Green),
-                "minecraft:lime_concrete" => Blocks::Concrete(DyeColor::LimeGreen),
+                "minecraft:lime_concrete" => Blocks::Concrete(DyeColor::Lime),
                 "minecraft:blue_concrete" => Blocks::Concrete(DyeColor::Blue),
                 "minecraft:light_blue_concrete" => Blocks::Concrete(DyeColor::LightBlue),
                 "minecraft:cyan_concrete" => Blocks::Concrete(DyeColor::Cyan),
@@ -2029,7 +2078,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_concrete_powder" => Blocks::ConcretePowder(DyeColor::Orange),
                 "minecraft:yellow_concrete_powder" => Blocks::ConcretePowder(DyeColor::Yellow),
                 "minecraft:green_concrete_powder" => Blocks::ConcretePowder(DyeColor::Green),
-                "minecraft:lime_concrete_powder" => Blocks::ConcretePowder(DyeColor::LimeGreen),
+                "minecraft:lime_concrete_powder" => Blocks::ConcretePowder(DyeColor::Lime),
                 "minecraft:blue_concrete_powder" => Blocks::ConcretePowder(DyeColor::Blue),
                 "minecraft:light_blue_concrete_powder" => Blocks::ConcretePowder(DyeColor::LightBlue),
                 "minecraft:cyan_concrete_powder" => Blocks::ConcretePowder(DyeColor::Cyan),
@@ -2060,13 +2109,13 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:grass_block" => Blocks::GrassBlock(GrassType::Grass, get_snowy(nbt)),
                 "minecraft:podzol" => Blocks::GrassBlock(GrassType::Podzol, get_snowy(nbt)),
                 "minecraft:mycelium" => Blocks::GrassBlock(GrassType::Mycelium, get_snowy(nbt)),
-                "minecraft:deepslate" => Blocks::Deepslate(ShapedDirectedBlock::Block(get_axis(nbt))),
+                "minecraft:deepslate" => Blocks::Deepslate(get_axis(nbt)),
                 "minecraft:basalt" => Blocks::Basalt(get_axis(nbt)),
                 "minecraft:polished_basalt" => Blocks::PolishedBasalt(get_axis(nbt)),
                 "minecraft:bone_block" => Blocks::BoneBlock(get_axis(nbt)),
                 "minecraft:quartz_pillar" => Blocks::QuartzPillar(get_axis(nbt)),
                 "minecraft:infested_deepslate" => {
-                    Blocks::InfestedDeepslate(ShapedDirectedBlock::Block(get_axis(nbt)))
+                    Blocks::InfestedDeepslate(get_axis(nbt))
                 }
                 "minecraft:deepslate_redstone_ore" => {
                     Blocks::DeepslateOre(OreType::Redstone(get_lit(nbt)))
@@ -2119,7 +2168,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 }
                 "minecraft:purpur_pillar" => Blocks::PurpurPillar(get_axis(nbt)),
                 "minecraft:ochre_froglight" => Blocks::OchreFroglight(get_axis(nbt)),
-                "minecraft:verdant_froglight" => Blocks::OchreFroglight(get_axis(nbt)),
+                "minecraft:verdant_froglight" => Blocks::VerdantFroglight(get_axis(nbt)),
                 "minecraft:pearlescent_froglight" => Blocks::PearlescentFroglight(get_axis(nbt)),
 
                 "minecraft:stone_slab" => Blocks::Stone(get_slab(nbt)),
@@ -2252,7 +2301,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:oak_fence_gate" => {
                     Blocks::FenceGate(WoodType::Oak, get_open(nbt), get_powered(nbt), get_facing4(nbt), get_in_wall(nbt))
                 }
-                "minecraft:oak_sapling" => Blocks::Sapling(SaplingType::Oak), //ignore stage
+                "minecraft:oak_sapling" => Blocks::Sapling(SaplingType::Oak, get_stage1(nbt)),
                 "minecraft:oak_button" => Blocks::Button(ButtonType::Oak, get_powered(nbt)),
                 "minecraft:oak_wall_sign" => Blocks::Sign(WoodType::Oak, Sign::WallSign(get_facing4(nbt)), get_waterlogged(nbt)),
                 "minecraft:oak_sign" => Blocks::Sign(WoodType::Oak, Sign::Sign(get_rotation(nbt)), get_waterlogged(nbt)),
@@ -2293,7 +2342,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:birch_fence_gate" => {
                     Blocks::FenceGate(WoodType::Birch, get_open(nbt), get_powered(nbt), get_facing4(nbt), get_in_wall(nbt))
                 }
-                "minecraft:birch_sapling" => Blocks::Sapling(SaplingType::Birch), //ignore stage
+                "minecraft:birch_sapling" => Blocks::Sapling(SaplingType::Birch, get_stage1(nbt)),
                 "minecraft:birch_button" => Blocks::Button(ButtonType::Birch, get_powered(nbt)),
                 "minecraft:birch_wall_sign" => Blocks::Sign(WoodType::Birch, Sign::WallSign(get_facing4(nbt)), get_waterlogged(nbt)),
                 "minecraft:birch_sign" => Blocks::Sign(WoodType::Birch, Sign::Sign(get_rotation(nbt)), get_waterlogged(nbt)),
@@ -2334,7 +2383,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:spruce_fence_gate" => {
                     Blocks::FenceGate(WoodType::Spruce, get_open(nbt), get_powered(nbt), get_facing4(nbt), get_in_wall(nbt))
                 }
-                "minecraft:spruce_sapling" => Blocks::Sapling(SaplingType::Spruce), //ignore stage
+                "minecraft:spruce_sapling" => Blocks::Sapling(SaplingType::Spruce, get_stage1(nbt)),
                 "minecraft:spruce_button" => Blocks::Button(ButtonType::Spruce, get_powered(nbt)),
                 "minecraft:spruce_wall_sign" => Blocks::Sign(WoodType::Spruce, Sign::WallSign(get_facing4(nbt)), get_waterlogged(nbt)),
                 "minecraft:spruce_sign" => Blocks::Sign(WoodType::Spruce, Sign::Sign(get_rotation(nbt)), get_waterlogged(nbt)),
@@ -2375,7 +2424,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:jungle_fence_gate" => {
                     Blocks::FenceGate(WoodType::Jungle, get_open(nbt), get_powered(nbt), get_facing4(nbt), get_in_wall(nbt))
                 }
-                "minecraft:jungle_sapling" => Blocks::Sapling(SaplingType::Jungle), //ignore stage
+                "minecraft:jungle_sapling" => Blocks::Sapling(SaplingType::Jungle, get_stage1(nbt)),
                 "minecraft:jungle_button" => Blocks::Button(ButtonType::Jungle, get_powered(nbt)),
                 "minecraft:jungle_wall_sign" => Blocks::Sign(WoodType::Jungle, Sign::WallSign(get_facing4(nbt)), get_waterlogged(nbt)),
                 "minecraft:jungle_sign" => Blocks::Sign(WoodType::Jungle, Sign::Sign(get_rotation(nbt)), get_waterlogged(nbt)),
@@ -2416,7 +2465,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:dark_oak_fence_gate" => {
                     Blocks::FenceGate(WoodType::DarkOak, get_open(nbt), get_powered(nbt), get_facing4(nbt), get_in_wall(nbt))
                 }
-                "minecraft:dark_oak_sapling" => Blocks::Sapling(SaplingType::DarkOak), //ignore stage
+                "minecraft:dark_oak_sapling" => Blocks::Sapling(SaplingType::DarkOak, get_stage1(nbt)),
                 "minecraft:dark_oak_button" => Blocks::Button(ButtonType::DarkOak, get_powered(nbt)),
                 "minecraft:dark_oak_wall_sign" => Blocks::Sign(WoodType::DarkOak, Sign::WallSign(get_facing4(nbt)), get_waterlogged(nbt)),
                 "minecraft:dark_oak_sign" => Blocks::Sign(WoodType::DarkOak, Sign::Sign(get_rotation(nbt)), get_waterlogged(nbt)),
@@ -2457,7 +2506,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:acacia_fence_gate" => {
                     Blocks::FenceGate(WoodType::Acacia, get_open(nbt), get_powered(nbt), get_facing4(nbt), get_in_wall(nbt))
                 }
-                "minecraft:acacia_sapling" => Blocks::Sapling(SaplingType::Acacia), //ignore stage
+                "minecraft:acacia_sapling" => Blocks::Sapling(SaplingType::Acacia, get_stage1(nbt)),
                 "minecraft:acacia_button" => Blocks::Button(ButtonType::Acacia, get_powered(nbt)),
                 "minecraft:acacia_wall_sign" => Blocks::Sign(WoodType::Acacia, Sign::WallSign(get_facing4(nbt)), get_waterlogged(nbt)),
                 "minecraft:acacia_sign" => Blocks::Sign(WoodType::Acacia, Sign::Sign(get_rotation(nbt)), get_waterlogged(nbt)),
@@ -2502,7 +2551,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:muddy_mangrove_roots" => Blocks::MuddyMangroveRoots(get_axis(nbt)),
 
                 "minecraft:mangrove_propagule" => {//weird
-                    Blocks::MangrovePropagule(get_stage4(nbt), get_hanging(nbt), get_waterlogged(nbt))
+                    Blocks::MangrovePropagule(get_age3(nbt), get_hanging(nbt), get_stage1(nbt), get_waterlogged(nbt))
                 }
                 "minecraft:mangrove_button" => Blocks::Button(ButtonType::Mangrove, get_powered(nbt)),
                 "minecraft:mangrove_wall_sign" => Blocks::Sign(WoodType::Mangrove, Sign::WallSign(get_facing4(nbt)), get_waterlogged(nbt)),
@@ -2544,7 +2593,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:crimson_fence_gate" => {
                     Blocks::FenceGate(WoodType::Crimson, get_open(nbt), get_powered(nbt), get_facing4(nbt), get_in_wall(nbt))
                 }
-                "minecraft:crimson_sapling" => Blocks::Sapling(SaplingType::Crimson), //ignore stage
+                "minecraft:crimson_sapling" => Blocks::Sapling(SaplingType::Crimson, get_stage1(nbt)),
                 "minecraft:crimson_button" => Blocks::Button(ButtonType::Crimson, get_powered(nbt)),
                 "minecraft:crimson_wall_sign" => Blocks::Sign(WoodType::Crimson, Sign::WallSign(get_facing4(nbt)), get_waterlogged(nbt)),
                 "minecraft:crimson_sign" => Blocks::Sign(WoodType::Crimson, Sign::Sign(get_rotation(nbt)), get_waterlogged(nbt)),
@@ -2585,7 +2634,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:warped_fence_gate" => {
                     Blocks::FenceGate(WoodType::Warped, get_open(nbt), get_powered(nbt), get_facing4(nbt), get_in_wall(nbt))
                 }
-                "minecraft:warped_sapling" => Blocks::Sapling(SaplingType::Warped), //ignore stage
+                "minecraft:warped_sapling" => Blocks::Sapling(SaplingType::Warped, get_stage1(nbt)),
                 "minecraft:warped_button" => Blocks::Button(ButtonType::Warped, get_powered(nbt)),
                 "minecraft:warped_wall_sign" => Blocks::Sign(WoodType::Warped, Sign::WallSign(get_facing4(nbt)), get_waterlogged(nbt)),
                 "minecraft:warped_sign" => Blocks::Sign(WoodType::Warped, Sign::Sign(get_rotation(nbt)), get_waterlogged(nbt)),
@@ -2645,7 +2694,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:damaged_anvil" => Blocks::Anvil(AnvilDamage::Damaged, get_facing4(nbt)),
 
                 "minecraft:cactus" => Blocks::Flower(Flower::Cactus), //ignoring age
-                "minecraft:sugar_cane" => Blocks::SugarCane, //ignoring age
+                "minecraft:sugar_cane" => Blocks::SugarCane(get_age15(nbt)), //ignoring age
                 "minecraft:ladder" => Blocks::Ladder(get_waterlogged(nbt), get_facing4(nbt)),
                 "minecraft:bell" => Blocks::Bell(get_powered(nbt), get_facing4(nbt), get_attachment(nbt)),
 
@@ -2658,8 +2707,8 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:sunflower" => Blocks::TallFlower(TallFlower::Sunflower, get_half(nbt)),
 
                 "minecraft:bubble_column" => Blocks::BubbleColumn(get_drag(nbt)),
-                "minecraft:cave_vines" => Blocks::CaveVines(get_berries(nbt)),
-                "minecraft:cave_vines_plant" => Blocks::CaveVinesPlant(get_berries(nbt)),
+                "minecraft:cave_vines" => Blocks::CaveVines(get_berries(nbt), get_age24(nbt)),
+                "minecraft:cave_vines_plant" => Blocks::CaveVinesPlant(get_berries(nbt), get_age24(nbt)),
                 "minecraft:weeping_vines" => Blocks::WeepingVines(get_note_age25(nbt)),
                 "minecraft:twisting_vines" => Blocks::TwistingVines(get_note_age25(nbt)),
                 "minecraft:bee_nest" => Blocks::BeeNest(get_honey_level(nbt), get_facing4(nbt)),
@@ -2712,7 +2761,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:jack_o_lantern" => Blocks::JackOLantern(get_facing4(nbt)),
 
                 "minecraft:sea_pickle" => Blocks::SeaPickle(get_pickles(nbt), get_waterlogged(nbt)),
-                "minecraft:kelp" => Blocks::Kelp, //ignore age
+                "minecraft:kelp" => Blocks::Kelp(get_age25(nbt)), //ignore age
                 "minecraft:chorus_flower" => Blocks::ChorusFlower(get_age5(nbt)),
                 "minecraft:scaffolding" => Blocks::Scaffolding(get_distance(nbt), get_down(nbt), get_waterlogged(nbt)),
                 "minecraft:campfire" => Blocks::Campfire(Soul::Normal,
@@ -2810,6 +2859,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                         get_side(nbt, Direction6::South),
                         get_side(nbt, Direction6::West))
                 }
+                "minecraft:sweet_berry_bush" => Blocks::SweetBerryBush(get_age3(nbt)),
 
                 "minecraft:waxed_oxidized_cut_copper_stairs" => Blocks::CutCopper(CopperType::Oxidized, Waxed::Waxed, get_stair(nbt)),
                 "minecraft:waxed_weathered_cut_copper_stairs" => Blocks::CutCopper(CopperType::Weathered, Waxed::Waxed, get_stair(nbt)),
@@ -2834,7 +2884,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_stained_glass_pane" => get_glass_pane(DyeColorClear::Orange, nbt),
                 "minecraft:yellow_stained_glass_pane" => get_glass_pane(DyeColorClear::Yellow, nbt),
                 "minecraft:green_stained_glass_pane" => get_glass_pane(DyeColorClear::Green, nbt),
-                "minecraft:lime_stained_glass_pane" => get_glass_pane(DyeColorClear::LimeGreen, nbt),
+                "minecraft:lime_stained_glass_pane" => get_glass_pane(DyeColorClear::Lime, nbt),
                 "minecraft:blue_stained_glass_pane" => get_glass_pane(DyeColorClear::Blue, nbt),
                 "minecraft:light_blue_stained_glass_pane" => get_glass_pane(DyeColorClear::LightBlue, nbt),
                 "minecraft:cyan_stained_glass_pane" => get_glass_pane(DyeColorClear::Cyan, nbt),
@@ -2851,7 +2901,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_banner" => Blocks::Banner(DyeColor::Orange, get_rotation(nbt)),
                 "minecraft:yellow_banner" => Blocks::Banner(DyeColor::Yellow, get_rotation(nbt)),
                 "minecraft:green_banner" => Blocks::Banner(DyeColor::Green, get_rotation(nbt)),
-                "minecraft:lime_banner" => Blocks::Banner(DyeColor::LimeGreen, get_rotation(nbt)),
+                "minecraft:lime_banner" => Blocks::Banner(DyeColor::Lime, get_rotation(nbt)),
                 "minecraft:blue_banner" => Blocks::Banner(DyeColor::Blue, get_rotation(nbt)),
                 "minecraft:light_blue_banner" => Blocks::Banner(DyeColor::LightBlue, get_rotation(nbt)),
                 "minecraft:cyan_banner" => Blocks::Banner(DyeColor::Cyan, get_rotation(nbt)),
@@ -2868,7 +2918,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_glazed_terracotta" => Blocks::GlazedTerracotta(DyeColor::Orange, get_facing4(nbt)),
                 "minecraft:yellow_glazed_terracotta" => Blocks::GlazedTerracotta(DyeColor::Yellow, get_facing4(nbt)),
                 "minecraft:green_glazed_terracotta" => Blocks::GlazedTerracotta(DyeColor::Green, get_facing4(nbt)),
-                "minecraft:lime_glazed_terracotta" => Blocks::GlazedTerracotta(DyeColor::LimeGreen, get_facing4(nbt)),
+                "minecraft:lime_glazed_terracotta" => Blocks::GlazedTerracotta(DyeColor::Lime, get_facing4(nbt)),
                 "minecraft:blue_glazed_terracotta" => Blocks::GlazedTerracotta(DyeColor::Blue, get_facing4(nbt)),
                 "minecraft:light_blue_glazed_terracotta" => Blocks::GlazedTerracotta(DyeColor::LightBlue, get_facing4(nbt)),
                 "minecraft:cyan_glazed_terracotta" => Blocks::GlazedTerracotta(DyeColor::Cyan, get_facing4(nbt)),
@@ -2886,7 +2936,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                 "minecraft:orange_shulker_box" => Blocks::ShulkerBox(DyeColorClear::Orange, get_facing6(nbt)),
                 "minecraft:yellow_shulker_box" => Blocks::ShulkerBox(DyeColorClear::Yellow, get_facing6(nbt)),
                 "minecraft:green_shulker_box" => Blocks::ShulkerBox(DyeColorClear::Green, get_facing6(nbt)),
-                "minecraft:lime_shulker_box" => Blocks::ShulkerBox(DyeColorClear::LimeGreen, get_facing6(nbt)),
+                "minecraft:lime_shulker_box" => Blocks::ShulkerBox(DyeColorClear::Lime, get_facing6(nbt)),
                 "minecraft:blue_shulker_box" => Blocks::ShulkerBox(DyeColorClear::Blue, get_facing6(nbt)),
                 "minecraft:light_blue_shulker_box" => Blocks::ShulkerBox(DyeColorClear::LightBlue, get_facing6(nbt)),
                 "minecraft:cyan_shulker_box" => Blocks::ShulkerBox(DyeColorClear::Cyan, get_facing6(nbt)),
@@ -2917,7 +2967,7 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                     Blocks::Candle(DyeColorClear::Green, get_lit(nbt), get_candles(nbt), get_waterlogged(nbt))
                 },
                 "minecraft:lime_candle" => {
-                    Blocks::Candle(DyeColorClear::LimeGreen, get_lit(nbt), get_candles(nbt), get_waterlogged(nbt))
+                    Blocks::Candle(DyeColorClear::Lime, get_lit(nbt), get_candles(nbt), get_waterlogged(nbt))
                 },
                 "minecraft:blue_candle" => {
                     Blocks::Candle(DyeColorClear::Blue, get_lit(nbt), get_candles(nbt), get_waterlogged(nbt))
@@ -2950,39 +3000,794 @@ pub fn string_to_block(name: &str, nbt: Option<&HashMap<String, NBT>>) -> Blocks
                     Blocks::Candle(DyeColorClear::Black, get_lit(nbt), get_candles(nbt), get_waterlogged(nbt))
                 },
 
-                "minecraft:white_bed" => Blocks::Bed(DyeColor::White, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:red_bed" => Blocks::Bed(DyeColor::Red, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:orange_bed" => Blocks::Bed(DyeColor::Orange, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:yellow_bed" => Blocks::Bed(DyeColor::Yellow, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:green_bed" => Blocks::Bed(DyeColor::Green, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:lime_bed" => Blocks::Bed(DyeColor::LimeGreen, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:blue_bed" => Blocks::Bed(DyeColor::Blue, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:light_blue_bed" => Blocks::Bed(DyeColor::LightBlue, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:cyan_bed" => Blocks::Bed(DyeColor::Cyan, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:magenta_bed" => Blocks::Bed(DyeColor::Magenta, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:pink_bed" => Blocks::Bed(DyeColor::Pink, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:purple_bed" => Blocks::Bed(DyeColor::Purple, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:brown_bed" => Blocks::Bed(DyeColor::Brown, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:gray_bed" => Blocks::Bed(DyeColor::Gray, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:light_gray_bed" => Blocks::Bed(DyeColor::LightGray, get_facing4(nbt), get_bed_end(nbt)),
-                "minecraft:black_bed" => Blocks::Bed(DyeColor::Black, get_facing4(nbt), get_bed_end(nbt)),
+                "minecraft:white_bed" => Blocks::Bed(DyeColor::White, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:red_bed" => Blocks::Bed(DyeColor::Red, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:orange_bed" => Blocks::Bed(DyeColor::Orange, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:yellow_bed" => Blocks::Bed(DyeColor::Yellow, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:green_bed" => Blocks::Bed(DyeColor::Green, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:lime_bed" => Blocks::Bed(DyeColor::Lime, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:blue_bed" => Blocks::Bed(DyeColor::Blue, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:light_blue_bed" => Blocks::Bed(DyeColor::LightBlue, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:cyan_bed" => Blocks::Bed(DyeColor::Cyan, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:magenta_bed" => Blocks::Bed(DyeColor::Magenta, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:pink_bed" => Blocks::Bed(DyeColor::Pink, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:purple_bed" => Blocks::Bed(DyeColor::Purple, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:brown_bed" => Blocks::Bed(DyeColor::Brown, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:gray_bed" => Blocks::Bed(DyeColor::Gray, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:light_gray_bed" => Blocks::Bed(DyeColor::LightGray, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
+                "minecraft:black_bed" => Blocks::Bed(DyeColor::Black, get_facing4(nbt), get_bed_end(nbt), get_occupied(nbt)),
                 _ => panic!("{} {:?}", name, nbt),
             }
         }
     }
 }
 
-// pub fn block_to_str(block: &Blocks) -> &str {
-//     match block {
-//         Blocks::Air => "Air",
-//         Blocks::Block(ShapedMaterial::Stone) => "Stone",
-//         Blocks::Dirt => "Dirt",
-//         //Blocks::Grass => "Grass",
-//         Blocks::Water => "Water",
-//         Blocks::Block(ShapedMaterial::Deepslate) => "Deepslate",
-//         Blocks::Block(ShapedMaterial::Andesite) => "Andesite",
-//         Blocks::Block(ShapedMaterial::Diorite) => "Diorite",
-//         Blocks::Block(ShapedMaterial::Granite) => "Granite",
-//         _ => todo!(),
-//     }
-// }
+fn lvl_to_str<T: Into<Level25>>(lvl: T) -> &'static str {
+    let lvl: Level25 = lvl.into();
+    match lvl {
+        Level25::Zero => "0",
+        Level25::One => "1",
+        Level25::Two => "2",
+        Level25::Three => "3",
+        Level25::Four => "4",
+        Level25::Five => "5",
+        Level25::Six => "6",
+        Level25::Seven => "7",
+        Level25::Eight => "8",
+        Level25::Nine => "9",
+        Level25::Ten => "10",
+        Level25::Eleven => "11",
+        Level25::Twelve => "12",
+        Level25::Thirteen => "13",
+        Level25::Fourteen => "14",
+        Level25::Fifteen => "15",
+        Level25::Sixteen => "16",
+        Level25::Seventeen => "17",
+        Level25::Eighteen => "18",
+        Level25::Nineteen => "19",
+        Level25::Twenty => "20",
+        Level25::TwentyOne => "21",
+        Level25::TwentyTwo => "22",
+        Level25::TwentyThree => "23",
+        Level25::TwentyFour => "24",
+        Level25::TwentyFive => "25",
+    }
+}
+
+fn dir_to_str<T: Into<Direction6> + Copy>(dir: T) -> &'static str {
+    let dir: Direction6 = dir.into();
+    match dir {
+        Direction6::North => "north",
+        Direction6::East => "east",
+        Direction6::South => "south",
+        Direction6::West => "west",
+        Direction6::Down => "down",
+        Direction6::Up => "up",
+    }
+}
+
+fn slab_half_to_str<T: Into<SlabHalf> + Copy>(sh: T) -> &'static str {
+    let sh: SlabHalf = sh.into();
+    match sh {
+        SlabHalf::Up => "top",
+        SlabHalf::Down => "bottom",
+        SlabHalf::Double => "double",
+    }
+}
+
+fn stair_shape_to_str(w: StairShape) -> &'static str {
+    match w {
+        StairShape::InnerLeft => "inner_left",
+        StairShape::InnerRight => "inner_right",
+        StairShape::OuterLeft => "outer_left",
+        StairShape::OuterRight => "outer_right",
+        StairShape::Straight => "straight",
+    }
+}
+
+fn water_logged_to_str(w: WaterLogged) -> &'static str {
+    match w {
+        WaterLogged::WaterLogged => "true",
+        WaterLogged::Air => "false",
+    }
+}
+
+fn side_to_str(w: Side) -> &'static str {
+    match w {
+        Side::True => "true",
+        Side::False => "false",
+    }
+}
+
+fn axis_to_str(a: Axis) -> &'static str {
+    match a {
+        Axis::X => "x",
+        Axis::Y => "y",
+        Axis::Z => "z",
+    }
+}
+
+fn lit_to_str(a: Lit) -> &'static str {
+    match a {
+        Lit::Lit => "true",
+        Lit::Unlit => "false",
+    }
+}
+
+fn dye_to_str<T: Into<DyeColorClear>>(a: T) -> &'static str {
+    let a: DyeColorClear = a.into();
+    match a {
+        DyeColorClear::White => "white",
+        DyeColorClear::Red => "red",
+        DyeColorClear::Orange => "orange",
+        DyeColorClear::Yellow => "yellow",
+        DyeColorClear::Green => "green",
+        DyeColorClear::Lime => "lime",
+        DyeColorClear::Blue => "blue",
+        DyeColorClear::LightBlue => "light_blue",
+        DyeColorClear::Cyan => "cyan",
+        DyeColorClear::Magenta => "magenta",
+        DyeColorClear::Pink => "pink",
+        DyeColorClear::Purple => "purple",
+        DyeColorClear::Brown => "brown",
+        DyeColorClear::Gray => "gray",
+        DyeColorClear::LightGray => "light_gray",
+        DyeColorClear::Black => "black",
+        DyeColorClear::Clear => "clear",
+    }
+}
+
+fn wood_to_str<T: Into<DoorType>>(a: T) -> &'static str {
+    let a: DoorType = a.into();
+    match a {
+        DoorType::Oak => "oak",
+        DoorType::Birch => "birch",
+        DoorType::Spruce => "spruce",
+        DoorType::Jungle => "jungle",
+        DoorType::DarkOak => "dark_oak",
+        DoorType::Acacia => "acacia",
+        DoorType::Crimson => "crimson",
+        DoorType::Warped => "warped",
+        DoorType::Mangrove => "mangrove",
+        DoorType::Iron => "iron",
+    }
+}
+
+fn dye_to_name<T: Into<DyeColorClear>>(a: T, part: &str, name: &str) -> String {
+    let a: DyeColorClear = a.into();
+    match a {
+        DyeColorClear::Clear => name.to_string(),
+        col => format!("{}{}{}", dye_to_str(col), part, name)
+    }
+}
+
+fn block_nbt(name: &str) -> NBT {
+    let mut map = HashMap::<String, NBT>::new();
+    map.insert("name".to_string(), NBT::String(name.to_string()));
+    NBT::Compound(map)
+}
+
+fn block_nbt_with_data(name: &str, nbt: NBT) -> NBT {
+    let mut map = HashMap::<String, NBT>::new();
+    map.insert("Name".to_string(), NBT::String(format!("minecraft:{name}")));
+    map.insert("Properties".to_string(), nbt);
+    NBT::Compound(map)
+}
+
+struct NBTMap(HashMap<String, NBT>);
+
+impl NBTMap {
+    fn new() -> Self {
+        Self(HashMap::new())
+    }
+
+    fn to(self) -> NBT {
+        NBT::Compound(self.0)
+    }
+
+    fn insert_level<T: Into<Level25> + Copy>(mut self, lvl: &T) -> Self {
+        self.0.insert("level".to_string(), NBT::String(lvl_to_str(*lvl).to_string()));
+        self
+    }
+
+    fn insert_age<T: Into<Level25> + Copy>(mut self, age: &T) -> Self {
+        self.0.insert("age".to_string(), NBT::String(lvl_to_str(*age).to_string()));
+        self
+    }
+
+    fn insert_stage<T: Into<Level25> + Copy>(mut self, stage: &T) -> Self {
+        self.0.insert("stage".to_string(), NBT::String(lvl_to_str(*stage).to_string()));
+        self
+    }
+
+    fn insert_facing<T: Into<Direction6> + Copy>(mut self, dir: &T) -> Self {
+        self.0.insert("facing".to_string(), NBT::String(dir_to_str(*dir).to_string()));
+        self
+    }
+
+    fn insert_snowy(mut self, snowy: Snowy) -> Self {
+        self.0.insert("snowy".to_string(), NBT::String(match snowy {
+            Snowy::True => "true",
+            Snowy::False => "false",
+        }.to_string()));
+        self
+    }
+
+    fn insert_half(mut self, ud: UpDown) -> Self {
+        self.0.insert("half".to_string(), NBT::String(slab_half_to_str(ud).to_string()));
+        self
+    }
+
+    fn insert_slab_half(mut self, ud: SlabHalf) -> Self {
+        self.0.insert("type".to_string(), NBT::String(slab_half_to_str(ud).to_string()));
+        self
+    }
+
+    fn insert_shape(mut self, ud: StairShape) -> Self {
+        self.0.insert("shape".to_string(), NBT::String(stair_shape_to_str(ud).to_string()));
+        self
+    }
+
+    fn insert_side(mut self, side: &str, s: Side) -> Self {
+        self.0.insert(side.to_string(), NBT::String(side_to_str(s).to_string()));
+        self
+    }
+
+    fn insert_water_logged(mut self, w: WaterLogged) -> Self {
+        self.0.insert("waterlogged".to_string(), NBT::String(water_logged_to_str(w).to_string()));
+        self
+    }
+
+    fn insert_axis(mut self, a: Axis) -> Self {
+        self.0.insert("axis".to_string(), NBT::String(axis_to_str(a).to_string()));
+        self
+    }
+
+    fn insert_lit(mut self, a: Lit) -> Self {
+        self.0.insert("lit".to_string(), NBT::String(lit_to_str(a).to_string()));
+        self
+    }
+}
+
+fn shaped_block_to_nbt(name: &str, shape: &ShapedBlock, suffix: &str) -> NBT {
+    match shape {
+        ShapedBlock::Stair(dir, side, shape, wlog) => {
+            block_nbt_with_data(&format!("{}_stairs", name),
+                NBTMap::new()
+                    .insert_facing(dir)
+                    .insert_half(*side)
+                    .insert_shape(*shape)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Slab(side, wlog) => {
+            block_nbt_with_data(&format!("{}_slab", name),
+                NBTMap::new()
+                    .insert_slab_half(*side)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Wall(n, e, s, w, u, wlog) => {
+            block_nbt_with_data(&format!("{}_wall", name),
+                NBTMap::new()
+                    .insert_side("north", *n)
+                    .insert_side("east", *e)
+                    .insert_side("south", *s)
+                    .insert_side("west", *w)
+                    .insert_side("up", *u)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Fence(n, e, s, w, wlog) => {
+            block_nbt_with_data(&format!("{}_fence", name),
+                NBTMap::new()
+                    .insert_side("north", *n)
+                    .insert_side("east", *e)
+                    .insert_side("south", *s)
+                    .insert_side("west", *w)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Block => block_nbt(&format!("{name}{suffix}"))
+    }
+}
+
+fn shaped_block_to_nbt_sb(name: &str, shape: &ShapedBlock, suffix: &str) -> NBT {
+    match shape {
+        ShapedBlock::Slab(side, wlog) => {
+            block_nbt_with_data(&format!("{}_slab", name),
+                NBTMap::new()
+                    .insert_slab_half(*side)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Block => block_nbt(&format!("{name}{suffix}")),
+        _ => panic!("not a minecraft block {name} : {shape:?}")
+    }
+}
+
+fn shaped_block_to_nbt_ssb(name: &str, shape: &ShapedBlock, suffix: &str) -> NBT {
+    match shape {
+        ShapedBlock::Stair(dir, side, shape, wlog) => {
+            block_nbt_with_data(&format!("{}_stairs", name),
+                NBTMap::new()
+                    .insert_facing(dir)
+                    .insert_half(*side)
+                    .insert_shape(*shape)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Slab(side, wlog) => {
+            block_nbt_with_data(&format!("{}_slab", name),
+                NBTMap::new()
+                    .insert_slab_half(*side)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Block => block_nbt(&format!("{name}{suffix}")),
+        _ => panic!("not a minecraft block {name} : {shape:?}")
+    }
+}
+
+fn shaped_block_to_nbt_sswb(name: &str, shape: &ShapedBlock, suffix: &str) -> NBT {
+    match shape {
+        ShapedBlock::Stair(dir, side, shape, wlog) => {
+            block_nbt_with_data(&format!("{}_stairs", name),
+                NBTMap::new()
+                    .insert_facing(dir)
+                    .insert_half(*side)
+                    .insert_shape(*shape)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Slab(side, wlog) => {
+            block_nbt_with_data(&format!("{}_slab", name),
+                NBTMap::new()
+                    .insert_slab_half(*side)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Wall(n, e, s, w, u, wlog) => {
+            block_nbt_with_data(&format!("{}_wall", name),
+                NBTMap::new()
+                    .insert_side("north", *n)
+                    .insert_side("east", *e)
+                    .insert_side("south", *s)
+                    .insert_side("west", *w)
+                    .insert_side("up", *u)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Block => block_nbt(&format!("{name}{suffix}")),
+        _ => panic!("not a minecraft block {name} : {shape:?}")
+    }
+}
+
+fn shaped_block_to_nbt_ssfb(name: &str, shape: &ShapedBlock, suffix: &str) -> NBT {
+    match shape {
+        ShapedBlock::Stair(dir, side, shape, wlog) => {
+            block_nbt_with_data(&format!("{}_stairs", name),
+                NBTMap::new()
+                    .insert_facing(dir)
+                    .insert_half(*side)
+                    .insert_shape(*shape)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Slab(side, wlog) => {
+            block_nbt_with_data(&format!("{}_slab", name),
+                NBTMap::new()
+                    .insert_slab_half(*side)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Fence(n, e, s, w, wlog) => {
+            block_nbt_with_data(&format!("{}_wall", name),
+                NBTMap::new()
+                    .insert_side("north", *n)
+                    .insert_side("east", *e)
+                    .insert_side("south", *s)
+                    .insert_side("west", *w)
+                    .insert_water_logged(*wlog)
+                    .to())
+        },
+        ShapedBlock::Block => block_nbt(&format!("{name}{suffix}")),
+        _ => panic!("not a minecraft block {name} : {shape:?}")
+    }
+}
+
+pub fn block_to_nbt(block: &Blocks) -> NBT {
+    match block {
+        Blocks::Crop7(crop, age) => {
+            let age = NBTMap::new().insert_age(age).to();
+            match crop {
+                Age7Crop::Wheat => block_nbt_with_data("wheat", age),
+                Age7Crop::Carrot => block_nbt_with_data("carrots", age),
+                Age7Crop::Potato => block_nbt_with_data("potatoes", age),
+                Age7Crop::MelonStem => block_nbt_with_data("melon_stem", age),
+                Age7Crop::PumpkinStem => block_nbt_with_data("pumpkin_stem", age),
+            }
+        },
+        Blocks::Crop3(crop, age) => {
+            let age = NBTMap::new().insert_age(age).to();
+            match crop {
+                Age3Crop::Beetroot => block_nbt_with_data("beetroots", age),
+                Age3Crop::NetherWart => block_nbt_with_data("nether_wart", age),
+            }
+        },
+        Blocks::MelonStem(f) => block_nbt_with_data("attached_melon_stem",
+            NBTMap::new().insert_facing(f).to()),
+        Blocks::PumpkinStem(f) => block_nbt_with_data("attached_pumpkin_stem",
+        NBTMap::new().insert_facing(f).to()),
+        Blocks::Air => block_nbt("air"),
+        Blocks::CaveAir => block_nbt("cave_air"),
+        Blocks::Dirt => block_nbt("dirt"),
+        Blocks::GrassBlock(t, s) => {
+            let snowy = NBTMap::new().insert_snowy(*s).to();
+            match t {
+                GrassType::Grass => block_nbt_with_data("grass_block", snowy),
+                GrassType::Mycelium => block_nbt_with_data("mycelium", snowy),
+                GrassType::Podzol => block_nbt_with_data("podzol", snowy),
+            }
+        },
+        Blocks::Grass => block_nbt("grass"),
+        Blocks::Bedrock => block_nbt("bedrock"),
+        Blocks::Stone(shape) => shaped_block_to_nbt_ssb("stone", shape, ""),
+        Blocks::Cobblestone(shape) => shaped_block_to_nbt_sswb("cobblestone", shape, ""),
+        Blocks::MossyCobblestone(shape) =>
+            shaped_block_to_nbt_sswb("mossy_cobblestone", shape, ""),
+        Blocks::Deepslate(a) => block_nbt_with_data("deepslate",
+            NBTMap::new().insert_axis(*a).to()),
+        Blocks::InfestedDeepslate(a) => block_nbt_with_data("infested_deepslate",
+        NBTMap::new().insert_axis(*a).to()),
+        Blocks::StoneBrick(shape) => shaped_block_to_nbt_sswb("stone_brick", shape, "s"),
+        Blocks::MossyStoneBrick(shape) => shaped_block_to_nbt_sswb("mossy_stone_brick", shape, "s"),
+        Blocks::SmoothStone(shape) => shaped_block_to_nbt_sb("smooth_stone", shape, ""),
+        Blocks::CrackedStoneBricks => block_nbt("cracked_stone_bricks"),
+        Blocks::CrackedDeepslateBricks => block_nbt("cracked_deepslate_bricks"),
+        Blocks::DeepslateBricks(shape) => shaped_block_to_nbt_sswb("deepslate_brick", shape, "s"),
+        Blocks::CobbledDeepslate(shape) => shaped_block_to_nbt_sswb("cobbled_deepslate", shape, ""),
+        Blocks::ChiseledDeepslate => block_nbt("chiseled_deepslate"),
+        Blocks::ChiseledStoneBrick => block_nbt("chiseled_stone_bricks"),
+        Blocks::DeepslateTile(shape) => shaped_block_to_nbt_sswb("deepslate_tile", shape, "s"),
+        Blocks::PolishedDeepslate(shape) => shaped_block_to_nbt_sswb("polished_deepslate", shape, ""),
+        Blocks::Blackstone(shape) => shaped_block_to_nbt_sswb("blackstone", shape, ""),
+        Blocks::PolishedBlackstone(shape) => shaped_block_to_nbt_sswb("polished_blackstone", shape, ""),
+        Blocks::PolishedBlackstoneBrick(shape) => shaped_block_to_nbt_sswb("polished_blackstone_brick", shape, "s"),
+        Blocks::Sandstone(col, shape) => {
+            match col {
+                Red::Normal => shaped_block_to_nbt_sswb("sandstone", shape, ""),
+                Red::Red => shaped_block_to_nbt_sswb("red_sandstone", shape, ""),
+            }
+        },
+        Blocks::Ore(ore) => {
+            match ore {
+                OreType::Copper => block_nbt("copper_ore"),
+                OreType::Iron => block_nbt("iron_ore"),
+                OreType::Gold => block_nbt("gold_ore"),
+                OreType::Coal => block_nbt("coal_ore"),
+                OreType::Lapis => block_nbt("lapis_ore"),
+                OreType::Redstone(lit) => block_nbt_with_data("redstone_ore", NBTMap::new().insert_lit(*lit).to()),
+                OreType::Diamond => block_nbt("diamond_ore"),
+                OreType::Emerald => block_nbt("emerald_ore"),
+            }
+        },
+        Blocks::DeepslateOre(ore) => {
+            match ore {
+                OreType::Copper => block_nbt("deepslate_copper_ore"),
+                OreType::Iron => block_nbt("deepslate_iron_ore"),
+                OreType::Gold => block_nbt("deepslate_gold_ore"),
+                OreType::Coal => block_nbt("deepslate_coal_ore"),
+                OreType::Lapis => block_nbt("lapis_ore"),
+                OreType::Redstone(lit) => block_nbt_with_data("deepslate_redstone_ore", NBTMap::new().insert_lit(*lit).to()),
+                OreType::Diamond => block_nbt("deepslate_diamond_ore"),
+                OreType::Emerald => block_nbt("deepslate_emerald_ore"),
+            }
+        },
+        Blocks::RawOre(ore) => {
+            match ore {
+                SmeltableOre::Copper => block_nbt("raw_copper_block"),
+                SmeltableOre::Iron => block_nbt("raw_iron_block"),
+                SmeltableOre::Gold => block_nbt("raw_gold_block"),
+            }
+        },
+        Blocks::OreBlock(ore) => {
+            match ore {
+                OreType::Copper => block_nbt("copper_block"),
+                OreType::Iron => block_nbt("iron_block"),
+                OreType::Gold => block_nbt("gold_block"),
+                OreType::Coal => block_nbt("coal_block"),
+                OreType::Lapis => block_nbt("lapis_block"),
+                OreType::Redstone(_) => block_nbt("redstone_block"),
+                OreType::Diamond => block_nbt("diamond_block"),
+                OreType::Emerald => block_nbt("emerald_block"),
+            }
+        },
+        Blocks::Gravel => block_nbt("gravel"),
+        Blocks::Tuff => block_nbt("tuff"),
+        Blocks::Lava(lvl) => block_nbt_with_data("lava", NBTMap::new().insert_level(lvl).to()),
+        Blocks::Water(lvl) => block_nbt_with_data("water", NBTMap::new().insert_level(lvl).to()),
+        Blocks::GlowLichen(n, e, s, w, u, d, wat) =>
+            block_nbt_with_data("glow_lichen",
+                NBTMap::new()
+                    .insert_side("north", *n)
+                    .insert_side("east", *e)
+                    .insert_side("south", *s)
+                    .insert_side("west", *w)
+                    .insert_side("up", *u)
+                    .insert_side("down", *d)
+                    .insert_water_logged(*wat).to()),
+        Blocks::Vine(n, e, s, w, u) => 
+            block_nbt_with_data("glow_lichen",
+                NBTMap::new()
+                    .insert_side("north", *n)
+                    .insert_side("east", *e)
+                    .insert_side("south", *s)
+                    .insert_side("west", *w)
+                    .insert_side("up", *u).to()),
+        Blocks::Sculk => block_nbt("sculk"),
+        Blocks::SculkVein(n, e, s, w, u, d, wat) => 
+        block_nbt_with_data("sculk_vein",
+            NBTMap::new()
+                .insert_side("north", *n)
+                .insert_side("east", *e)
+                .insert_side("south", *s)
+                .insert_side("west", *w)
+                .insert_side("up", *u)
+                .insert_side("down", *d)
+                .insert_water_logged(*wat).to()),
+        Blocks::SculkCatalist(_) => todo!(),
+        Blocks::SculkSensor(_, _, _) => todo!(),
+        Blocks::SculkShrieker(_, _, _) => todo!(),
+        Blocks::Chest(_, _, _, _) => todo!(),
+        Blocks::EnderChest(_, _) => todo!(),
+        Blocks::Spawner => block_nbt("spawner"),
+        Blocks::Andesite(shape) => shaped_block_to_nbt_sswb("andesite", shape, ""),
+        Blocks::Granite(shape) => shaped_block_to_nbt_sswb("granite", shape, ""),
+        Blocks::Diorite(shape) => shaped_block_to_nbt_sswb("diorite", shape, ""),
+        Blocks::PolishedAndesite(shape) => shaped_block_to_nbt_ssb("polished_andesite", shape, ""),
+        Blocks::PolishedGranite(shape) => shaped_block_to_nbt_ssb("polished_granite", shape, ""),
+        Blocks::PolishedDiorite(shape) => shaped_block_to_nbt_ssb("polished_diorite", shape, ""),
+        Blocks::InfestedStone => block_nbt("infested_stone"),
+        Blocks::DripstoneBlock => block_nbt("dripstone_block"),
+        Blocks::PointedDripstone(_, _, _) => todo!(),
+        Blocks::Flower(_) => todo!(),
+        Blocks::SmoothBasalt => block_nbt("smooth_basalt"),
+        Blocks::Log(_, _, _, _) => todo!(),
+        Blocks::Sapling(w, stage) => {
+            block_nbt_with_data(&format!("{}_sapling", wood_to_str(*w)),
+                NBTMap::new().insert_stage(stage).to())
+        },
+        Blocks::Planks(w, shape) => {
+            shaped_block_to_nbt_ssfb(wood_to_str(*w), shape, "_planks")
+        },
+        Blocks::Leaves(_, _, _, _) => todo!(),
+        Blocks::PressurePlate(_, _) => todo!(),
+        Blocks::Button(_, _) => todo!(),
+        Blocks::Door(_, _, _, _, _, _) => todo!(),
+        Blocks::Trapdoor(_, _, _, _, _, _) => todo!(),
+        Blocks::FenceGate(_, _, _, _, _) => todo!(),
+        Blocks::Sign(_, _, _) => todo!(),
+        Blocks::MangrovePropagule(_, _, _, _) => todo!(),
+        Blocks::MangroveRoots(_) => todo!(),
+        Blocks::MuddyMangroveRoots(_) => todo!(),
+        Blocks::HangingRoots(_) => todo!(),
+        Blocks::Azalea => block_nbt("azalea"),
+        Blocks::FloweringAzalea => block_nbt("flowering_azalea"),
+        Blocks::WarpedRoots => block_nbt("warped_roots"),
+        Blocks::SporeBlossom => block_nbt("spore_blossom"),
+        Blocks::IronBars(_, _, _, _, _) => todo!(),
+        Blocks::Calcite => block_nbt("calcite"),
+        Blocks::AmethystBlock => block_nbt("amethyst_block"),
+        Blocks::BuddingAmethyst => block_nbt("budding_amethyst"),
+        Blocks::AmethystCluster(_, _, _) => todo!(),
+        Blocks::DirtPath => block_nbt("dirt_path"),
+        Blocks::HayBlock(_) => todo!(),
+        Blocks::FlowerPot => block_nbt("flower_pot"),
+        Blocks::Potted(_) => todo!(),
+        Blocks::CrackedDeepslateTiles => block_nbt("cracked_deepslate_tiles"),
+        Blocks::Bed(_, _, _, _) => todo!(),
+        Blocks::Torch(_, _) => todo!(),
+        Blocks::RedstoneTorch(_, _) => todo!(),
+        Blocks::Furnace(_, _) => todo!(),
+        Blocks::BlastFurnace(_, _) => todo!(),
+        Blocks::Smoker(_, _) => todo!(),
+        Blocks::PolishedBasalt(_) => todo!(),
+        Blocks::WaterCauldron(_) => todo!(),
+        Blocks::Grindstone(_, _) => todo!(),
+        Blocks::Anvil(_, _) => todo!(),
+        Blocks::Brick(_) => todo!(),
+        Blocks::Sand(_) => todo!(),
+        Blocks::Ladder(_, _) => todo!(),
+        Blocks::Glass(dye) => block_nbt(&dye_to_name(*dye, "_stained_", "glass")),
+        Blocks::GlassPane(_, _, _, _, _, _) => todo!(),
+        Blocks::TintedGlass => block_nbt("tinted_glass"),
+        Blocks::Candle(_, _, _, _) => todo!(),
+        Blocks::Terracotta(dye) => block_nbt(&dye_to_name(*dye, "_", "terracotta")),
+        Blocks::GlazedTerracotta(_, _) => todo!(),
+        Blocks::Bell(_, _, _) => todo!(),
+        Blocks::Wool(dye) => block_nbt(&dye_to_name(*dye, "_", "wool")),
+        Blocks::Carpet(dye) => block_nbt(&dye_to_name(*dye, "_", "carpet")),
+        Blocks::Seagrass => block_nbt("seagrass"),
+        Blocks::TallFlower(_, _) => todo!(),
+        Blocks::Clay => block_nbt("clay"),
+        Blocks::MagmaBlock => block_nbt("magma_block"),
+        Blocks::BubbleColumn(_) => todo!(),
+        Blocks::SugarCane(_) => todo!(),
+        Blocks::CaveVines(_, _) => todo!(),
+        Blocks::CaveVinesPlant(_, _) => todo!(),
+        Blocks::WeepingVines(_) => todo!(),
+        Blocks::WeepingVinesPlant => block_nbt("weeping_vines_plant"),
+        Blocks::TwistingVines(_) => todo!(),
+        Blocks::TwistingVinesPlant => block_nbt("twisting_vines_plant"),
+        Blocks::Obsidian => block_nbt("obsidian"),
+        Blocks::Pumpkin => block_nbt("pumpkin"),
+        Blocks::Melon => block_nbt("melon"),
+        Blocks::BeeNest(_, _) => todo!(),
+        Blocks::BeeHive(_, _) => todo!(),
+        Blocks::MossBlock => block_nbt("moss_block"),
+        Blocks::BigDripleaf(_, _, _) => todo!(),
+        Blocks::BigDripleafStem(_, _) => todo!(),
+        Blocks::SmallDripleaf(_, _, _) => todo!(),
+        Blocks::Cobweb => block_nbt("cobweb"),
+        Blocks::Rail(_, _) => todo!(),
+        Blocks::ActivatorRail(_, _) => todo!(),
+        Blocks::PoweredRail(_, _) => todo!(),
+        Blocks::DetectorRail(_, _) => todo!(),
+        Blocks::SeaPickle(_, _) => todo!(),
+        Blocks::MossCarpet => block_nbt("moss_carpet"),
+        Blocks::NetherSprouts => block_nbt("nether_sprouts"),
+        Blocks::Kelp(_) => todo!(),
+        Blocks::SlimeBlock => block_nbt("slime_block"),
+        Blocks::HoneyBlock => block_nbt("honey_block"),
+        Blocks::RedstoneWire(_, _, _, _, _) => todo!(),
+        Blocks::Observer(_, _) => todo!(),
+        Blocks::TripwireHook(_, _, _) => todo!(),
+        Blocks::Hopper(_, _) => todo!(),
+        Blocks::RedstoneLamp(_) => todo!(),
+        Blocks::Tnt(_) => todo!(),
+        Blocks::Dispenser(_, _) => todo!(),
+        Blocks::Dropper(_, _) => todo!(),
+        Blocks::NoteBlock(_, _, _) => todo!(),
+        Blocks::Repeater(_, _, _, _) => todo!(),
+        Blocks::Comparator(_, _, _) => todo!(),
+        Blocks::Lectern(_, _, _) => todo!(),
+        Blocks::Piston(_, _, _) => todo!(),
+        Blocks::PistonHead(_, _, _) => todo!(),
+        Blocks::Target(_) => todo!(),
+        Blocks::Lever(_, _, _) => todo!(),
+        Blocks::LightningRod(_, _, _) => todo!(),
+        Blocks::DaylightDetector(_, _) => todo!(),
+        Blocks::BrownMushroomBlock(_, _, _, _, _, _) => todo!(),
+        Blocks::RedMushroomBlock(_, _, _, _, _, _) => todo!(),
+        Blocks::MushroomStem(_, _, _, _, _, _) => todo!(),
+        Blocks::Chain(_, _) => todo!(),
+        Blocks::RootedDirt => todo!(),
+        Blocks::Farmland(_) => todo!(),
+        Blocks::SoulSand => todo!(),
+        Blocks::CopperBlock(_, _) => todo!(),
+        Blocks::NetheriteBlock => block_nbt("netherite_block"),
+        Blocks::CutCopper(_, _, _) => todo!(),
+        Blocks::Composter(_) => todo!(),
+        Blocks::StoneCutter(_) => todo!(),
+        Blocks::CrimsonNylium => block_nbt("crimson_nylium"),
+        Blocks::WarpedNylium => block_nbt("warped_nylium"),
+        Blocks::NetherGoldOre => block_nbt("nether_gold_ore"),
+        Blocks::NetherQuartzOre => block_nbt("nether_quartz_ore"),
+        Blocks::AncientDebris => block_nbt("ancient_debris"),
+        Blocks::Sponge(_) => todo!(),
+        Blocks::ChiseledSandstone(_) => todo!(),
+        Blocks::CutSandstone(_, _) => todo!(),
+        Blocks::CoarseDirt => block_nbt("coarse_dirt"),
+        Blocks::Mud => block_nbt("mud"),
+        Blocks::SmoothSandstone(_, _) => todo!(),
+        Blocks::SmoothQuartz(_) => todo!(),
+        Blocks::Quartz(_) => todo!(),
+        Blocks::CarvedPumpkin(_) => todo!(),
+        Blocks::JackOLantern(_) => todo!(),
+        Blocks::MudBrick(_) => todo!(),
+        Blocks::NetherBrick(shape) => shaped_block_to_nbt("netherbrick", shape, "s"),
+        Blocks::RedNetherBrick(_) => todo!(),
+        Blocks::ChiseledNetherBrick => block_nbt("chiseled_nether_bricks"),
+        Blocks::CrackedNetherBrick => block_nbt("cracked_nether_bricks"),
+        Blocks::Purpur(_) => todo!(),
+        Blocks::Prismarine(_) => todo!(),
+        Blocks::DarkPrismarine(_) => todo!(),
+        Blocks::PrismarineBrick(_) => todo!(),
+        Blocks::Netherrack => block_nbt("netherrack"),
+        Blocks::SnowBlock => block_nbt("snow_block"),
+        Blocks::Ice(_) => todo!(),
+        Blocks::PurpurPillar(_) => todo!(),
+        Blocks::Bookshelf => block_nbt("bookshelf"),
+        Blocks::SoulSoil => block_nbt("soul_soil"),
+        Blocks::Basalt(_) => todo!(),
+        Blocks::Glowstone => block_nbt("glowstone"),
+        Blocks::PackedMud => block_nbt("packed_mud"),
+        Blocks::EndStoneBrick(_) => todo!(),
+        Blocks::EndStone => block_nbt("end_stone"),
+        Blocks::ReinforcedDeepslate => block_nbt("reinforced_deepslate"),
+        Blocks::ChiseledQuartz => block_nbt("chiseled_quartz_block"),
+        Blocks::QuartzBricks => block_nbt("quartz_bricks"),
+        Blocks::QuartzPillar(_) => todo!(),
+        Blocks::SeaLantern => block_nbt("sea_lantern"),
+        Blocks::WarpedWartBlock => block_nbt("warped_wart_block"),
+        Blocks::NetherWartBlock => block_nbt("nether_wart_block"),
+        Blocks::BoneBlock(_) => todo!(),
+        Blocks::Concrete(dye) => block_nbt(&dye_to_name(*dye, "_", "concrete")),
+        Blocks::ConcretePowder(dye) => block_nbt(&dye_to_name(*dye, "_", "concrete_powder")),
+        Blocks::Coral(_, _, _) => todo!(),
+        Blocks::GildedBlackstone => block_nbt("gilded_blackstone"),
+        Blocks::CryingObsidian => block_nbt("crying_obsidian"),
+        Blocks::DriedKelpBlock => block_nbt("dried_kelp_block"),
+        Blocks::ChiseledPolishedBlackstone => block_nbt("chiseled_polished_blackstone"),
+        Blocks::CrackedPolishedBlackstoneBrick => block_nbt("cracked_polished_blackstone_bricks"),
+        Blocks::ShulkerBox(_, _) => todo!(),
+        Blocks::Snow(_) => todo!(),
+        Blocks::Jukebox(_) => todo!(),
+        Blocks::InfestedCobblestone => block_nbt("infested_cobblestone"),
+        Blocks::InfestedStoneBricks => block_nbt("infested_stone_bricks"),
+        Blocks::InfestedCrackedStoneBricks => block_nbt("infested_cracked_stone_bricks"),
+        Blocks::InfestedMossyStoneBricks => block_nbt("infested_mossy_stone_bricks"),
+        Blocks::InfestedChiseledStoneBricks => block_nbt("infested_chiseled_stone_bricks"),
+        Blocks::EndPortalFrame(_, _) => todo!(),
+        Blocks::EnchantingTable => block_nbt("enchanting_table"),
+        Blocks::CraftingTable => block_nbt("crafting_table"),
+        Blocks::CartographyTable => block_nbt("cartography_table"),
+        Blocks::FletchingTable => block_nbt("fletching_table"),
+        Blocks::SmithingTable => block_nbt("smithing_table"),
+        Blocks::ChorusFlower(_) => todo!(),
+        Blocks::ChorusPlant(_, _, _, _, _, _) => todo!(),
+        Blocks::Scaffolding(_, _, _) => todo!(),
+        Blocks::Bamboo(_, _) => todo!(),
+        Blocks::BambooSapling => block_nbt("bamboo_sapling"),
+        Blocks::EndRod(_) => todo!(),
+        Blocks::OchreFroglight(_) => todo!(),
+        Blocks::VerdantFroglight(_) => todo!(),
+        Blocks::PearlescentFroglight(_) => todo!(),
+        Blocks::PlayerHead(_) => todo!(),
+        Blocks::ZombieHead(_) => todo!(),
+        Blocks::CreeperHead(_) => todo!(),
+        Blocks::DragonHead(_) => todo!(),
+        Blocks::SkeletonSkull(_) => todo!(),
+        Blocks::WitherSkeletonSkull(_) => todo!(),
+        Blocks::Banner(_, _) => todo!(),
+        Blocks::Loom(_) => todo!(),
+        Blocks::Barrel(_, _) => todo!(),
+        Blocks::Campfire(_, _, _, _, _) => todo!(),
+        Blocks::Shroomlight => block_nbt("shroomlite"),
+        Blocks::RespawnAnchor(_) => todo!(),
+        Blocks::Lodestone => block_nbt("lodestone"),
+        Blocks::HoneycombBlock => block_nbt("honeycomb_block"),
+        Blocks::Lantern(_, _, _) => todo!(),
+        Blocks::LilyPad => block_nbt("lily_pad"),
+        Blocks::Fire(_, _, _, _, _, _, _) => todo!(),
+        Blocks::BrewingStand(_, _, _) => todo!(),
+        Blocks::PowderSnow => block_nbt("powder_snow"),
+        Blocks::TurtleEgg(_, _) => todo!(),
+        Blocks::Beacon => block_nbt("beacon"),
+        Blocks::Tripwire(_, _, _, _, _, _, _) => todo!(),
+        Blocks::KelpPlant => block_nbt("kelp_plant"),
+        Blocks::DragonEgg => block_nbt("dragon_egg"),
+        Blocks::SweetBerryBush(_) => todo!(),
+    }
+}
+
+pub fn palette_to_block(pal_nbt: &NBT) -> Result<Blocks, String> {
+    let pal_map = pal_nbt.get_compound()?;
+    // println!("pal_nbt {:?}", pal_nbt);
+    let name = match pal_map.get("Name") {
+        Some(v) => v.get_string()?,
+        None => return Err("block has no name!".to_string()),
+    };
+    for (n, v) in pal_map.iter() {
+        if n != "Name" && n != "Properties" {
+            println!("unknown nbt tag in block {}: {} - {:?}", name, n, v);
+        }
+    }
+    let nbt = match pal_map.get("Properties") {
+        Some(NBT::Compound(t)) => Some(t),
+        None => None,
+        v => panic!("expected compound properties got {:?}", v)
+    };
+    Ok(string_to_block(name, nbt))
+}
